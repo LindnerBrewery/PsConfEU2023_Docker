@@ -1,0 +1,62 @@
+# Set base image
+FROM mcr.microsoft.com/windows/server:ltsc2022
+
+# Step 1 add user
+ARG SSHUser=SSHUser
+
+RUN NET USER %SSHUser% /add && \
+    NET LOCALGROUP Administrators /add %SSHUser%
+
+USER ${SSHUser}
+
+SHELL ["powershell.exe", "-ExecutionPolicy bypass", "-command"]
+
+# Step 2 install pwsh
+COPY install-pwsh.ps1 install-pwsh.ps1
+RUN ./install-pwsh.ps1;
+
+# Switch Shell
+SHELL ["pwsh.exe", "-ExecutionPolicy bypass", "-command"]
+
+# Step 3 install ssh under new user
+COPY install-openssh.ps1 install-openssh.ps1
+RUN C:/install-openssh.ps1;
+
+# Step 4 install vscode with extensions
+COPY install-vscodeserverAndExtensions.ps1 install-vscodeserverAndExtensions.ps1
+RUN ./install-vscodeserverAndExtensions.ps1 -extensions 'ms-vscode.powershell','TylerLeonhardt.vscode-inline-values-powershell','Gruntfuggly.todo-tree','streetsidesoftware.code-spell-checker';
+
+# Step 5 install choco,git and configure git
+RUN iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'));\
+    choco install git -yf;
+
+# add startup script
+COPY ./startup.ps1 startup.ps1
+
+ENTRYPOINT  & ./startup.ps1 &&
+CMD ping -t localhost
+
+
+# # Step 2 install pwsh
+# COPY install-pwsh.ps1 install-pwsh.ps1
+# RUN ./install-pwsh.ps1;
+
+# # Switch Shell
+# SHELL ["pwsh.exe", "-ExecutionPolicy bypass", "-command"]
+
+# # Step 3 install ssh under new user
+# COPY install-openssh.ps1 install-openssh.ps1
+# RUN C:/install-openssh.ps1;
+
+# # Step 4 install vscode with extensions
+# COPY install-vscodeserverAndExtensions.ps1 install-vscodeserverAndExtensions.ps1
+# RUN ./install-vscodeserverAndExtensions.ps1 -extensions 'ms-vscode.powershell','TylerLeonhardt.vscode-inline-values-powershell','Gruntfuggly.todo-tree','streetsidesoftware.code-spell-checker';
+
+# # Step 5 install choco,git and configure git
+# RUN iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'));\
+#     choco install git -yf;
+
+# # add startup script
+# COPY ./startup.ps1 startup.ps1
+
+# ENTRYPOINT  & ./startup.ps1 &&

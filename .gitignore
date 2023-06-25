@@ -1,0 +1,4 @@
+git.install.2.40.1.nupkg
+.vagrant
+*.zip
+*.nupkg
